@@ -1,8 +1,12 @@
-import { Sign } from "crypto";
 import { SignUpForm } from "./ui/SignUpForm";
+import { LoginForm } from "./ui/LoginForm";
 
 export default function Home() {
   return (
-    <SignUpForm />
+    <div>
+      <SignUpForm />
+      <LoginForm />
+    </div>
+    
   )
 }

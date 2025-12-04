@@ -22,5 +22,12 @@ export const SignupFormSchema = z.object({
     }),
 });
 
+export const LoginFormSchema = z.object({
+    email: z.email({ message: 'Please enter a valid email.' }),
+    password: z.string().min(1, { message: 'Password cannot be empty.' }),
+});
+
 // essentially infers the type from the schema defined above so name, email, password are all strings
 export type SignupValues = z.infer<typeof SignupFormSchema>;
+
+export type LoginValues = z.infer<typeof LoginFormSchema>;
