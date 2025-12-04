@@ -7,6 +7,7 @@ import { SignupFormSchema, type SignupValues } from "../lib/validation";
 // FieldErrors - type for possible validation errors, 
 // Partial - makes all fields optional
 // Record - creates an object type with keys of SignupValues and values of string
+// keyof SignupValues - gets the keys of SignupValues type (name, email, password)
 
 // the same as 
 // type FieldErrors = {
@@ -14,6 +15,7 @@ import { SignupFormSchema, type SignupValues } from "../lib/validation";
 //   email?: string;
 //   password?: string;
 // };
+
 type FieldErrors = Partial<Record<keyof SignupValues, string>>;
 
 export function SignUpForm() {
@@ -39,6 +41,7 @@ export function SignUpForm() {
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         // e.target -> input element that triggered the event
         const { name, value } = e.target;
+        console.log('change', name, value);
 
         // prev - previous state of the form
         // ..prev - copy all existing fields
@@ -54,7 +57,7 @@ export function SignUpForm() {
         }));
     }
 
-    function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         // FormEvent<HTMLFormElement> -> submit event from form a <form> element
         // prevent default form submission behavior
         e.preventDefault();
@@ -62,10 +65,12 @@ export function SignUpForm() {
 
         // validate with zod
         const result = SignupFormSchema.safeParse(form);
+        console.log('Zod result:', result);
 
         if (!result.success) {
           // start with empty errors list (no errors)
           const fieldErrors: FieldErrors = {};
+          console.log('Zod issues:', result.error.issues); 
 
           // iterate over validation issues
           for (const issue of result.error.issues) {
@@ -81,13 +86,28 @@ export function SignUpForm() {
 
         setIsSubmitting(true);
         try {
-            console.log('Form submitted:', form);
-            setMessage('Sign up successful!');
+          const res = await fetch('/api/signup', {
+            // POST to db
+            method: 'POST',
+            // let server know we're sending JSON
+            headers: { 'Content-Type': 'application/json' },
+            //stringify - convert JS object to JSON string
+            body: JSON.stringify(form),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            setMessage(data.error ?? 'Signup failed.');
+            return;
+          }
+
+          setMessage('Sign up successful!');
         } catch (err) {
-            console.error('Error submitting form:', err);
-            setMessage('Error submitting form. Please try again.');
+          console.error(err);
+          setMessage('Error submitting form. Please try again.');
         } finally {
-            setIsSubmitting(false);
+          setIsSubmitting(false);
         }
     }
 
@@ -123,8 +143,8 @@ export function SignUpForm() {
           className="w-full border rounded px-2 py-1"
           required
         />
-        {errors.name && (
-          <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+        {errors.email && (
+          <p className="text-sm text-red-500 mt-1">{errors.email}</p>
         )}
       </div>
 
@@ -141,8 +161,8 @@ export function SignUpForm() {
           className="w-full border rounded px-2 py-1"
           required
         />
-        {errors.name && (
-          <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+        {errors.password && (
+          <p className="text-sm text-red-500 mt-1">{errors.password}</p>
         )}
       </div>
 
