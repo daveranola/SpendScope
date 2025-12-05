@@ -1,13 +1,18 @@
 'use client'; // server componenrts run on server, needed for client side interactivity
 
 // FormEvent - for onSubmit event of form
-import { useState, type FormEvent, type ChangeEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { LoginFormSchema, LoginValues } from "../lib/validation";
-
 
 type FieldErrors = Partial<Record<keyof LoginValues, string>>;
 
 export function LoginForm() {
+    const inputClass =
+      "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200";
+    const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
+    const buttonClass =
+      "w-full rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-400/30 transition hover:from-slate-800 hover:via-slate-900 hover:to-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60";
+
     // generics, useState will be of type FormState
     // initial state is empty strings
     // setForm will be called when updating the form state
@@ -58,7 +63,7 @@ export function LoginForm() {
         if (!result.success) {
           // start with empty errors list (no errors)
           const fieldErrors: FieldErrors = {};
-          console.log('Zod issues:', result.error.issues); 
+          console.log('Zod issues:', result.error.issues);
 
           // iterate over validation issues
           for (const issue of result.error.issues) {
@@ -100,9 +105,9 @@ export function LoginForm() {
     }
 
     return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4 max-w-sm">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       <div>
-        <label htmlFor="email" className="block mb-1">
+        <label htmlFor="email" className={labelClass}>
           Email
         </label>
         <input
@@ -111,16 +116,16 @@ export function LoginForm() {
           type="email"
           value={form.email}
           onChange={handleChange}
-          className="w-full border rounded px-2 py-1"
+          className={inputClass}
           required
         />
         {errors.email && (
-          <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+          <p className="mt-1 text-sm font-medium text-red-500">{errors.email}</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="password" className="block mb-1">
+        <label htmlFor="password" className={labelClass}>
           Password
         </label>
         <input
@@ -129,11 +134,11 @@ export function LoginForm() {
           type="password"
           value={form.password}
           onChange={handleChange}
-          className="w-full border rounded px-2 py-1"
+          className={inputClass}
           required
         />
         {errors.password && (
-          <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+          <p className="mt-1 text-sm font-medium text-red-500">{errors.password}</p>
         )}
       </div>
 
@@ -141,12 +146,20 @@ export function LoginForm() {
         type="submit"
         // disable button while submitting
         disabled={isSubmitting}
-        className="w-full border rounded px-2 py-1"
+        className={buttonClass}
       >
         {isSubmitting ? 'Logging in...' : 'Log in'}
       </button>
 
-      {message && <p className="text-sm mt-2">{message}</p>}
+      {message && (
+        <p
+          className={`text-sm font-medium ${
+            message.toLowerCase().includes('success') ? 'text-emerald-600' : 'text-red-600'
+          }`}
+        >
+          {message}
+        </p>
+      )}
     </form>
   );
 }

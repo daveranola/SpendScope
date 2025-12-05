@@ -1,15 +1,15 @@
 'use client'; // server componenrts run on server, needed for client side interactivity
 
 // FormEvent - for onSubmit event of form
-import { useState, type FormEvent, type ChangeEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { SignupFormSchema, type SignupValues } from "../lib/validation";
 
-// FieldErrors - type for possible validation errors, 
+// FieldErrors - type for possible validation errors,
 // Partial - makes all fields optional
 // Record - creates an object type with keys of SignupValues and values of string
 // keyof SignupValues - gets the keys of SignupValues type (name, email, password)
 
-// the same as 
+// the same as
 // type FieldErrors = {
 //   name?: string;
 //   email?: string;
@@ -19,6 +19,12 @@ import { SignupFormSchema, type SignupValues } from "../lib/validation";
 type FieldErrors = Partial<Record<keyof SignupValues, string>>;
 
 export function SignUpForm() {
+    const inputClass =
+      "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200";
+    const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
+    const buttonClass =
+      "w-full rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-200/60 transition hover:from-teal-600 hover:to-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 disabled:cursor-not-allowed disabled:opacity-60";
+
     // generics, useState will be of type FormState
     // initial state is empty strings
     // setForm will be called when updating the form state
@@ -70,7 +76,7 @@ export function SignUpForm() {
         if (!result.success) {
           // start with empty errors list (no errors)
           const fieldErrors: FieldErrors = {};
-          console.log('Zod issues:', result.error.issues); 
+          console.log('Zod issues:', result.error.issues);
 
           // iterate over validation issues
           for (const issue of result.error.issues) {
@@ -112,9 +118,9 @@ export function SignUpForm() {
     }
 
     return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4 max-w-sm">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       <div>
-        <label htmlFor="name" className="block mb-1">
+        <label htmlFor="name" className={labelClass}>
           Name
         </label>
         <input
@@ -122,16 +128,16 @@ export function SignUpForm() {
           name="name"
           value={form.name}
           onChange={handleChange}
-          className="w-full border rounded px-2 py-1"
+          className={inputClass}
           required
         />
         {errors.name && (
-          <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+          <p className="mt-1 text-sm font-medium text-red-500">{errors.name}</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="email" className="block mb-1">
+        <label htmlFor="email" className={labelClass}>
           Email
         </label>
         <input
@@ -140,16 +146,16 @@ export function SignUpForm() {
           type="email"
           value={form.email}
           onChange={handleChange}
-          className="w-full border rounded px-2 py-1"
+          className={inputClass}
           required
         />
         {errors.email && (
-          <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+          <p className="mt-1 text-sm font-medium text-red-500">{errors.email}</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="password" className="block mb-1">
+        <label htmlFor="password" className={labelClass}>
           Password
         </label>
         <input
@@ -158,11 +164,11 @@ export function SignUpForm() {
           type="password"
           value={form.password}
           onChange={handleChange}
-          className="w-full border rounded px-2 py-1"
+          className={inputClass}
           required
         />
         {errors.password && (
-          <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+          <p className="mt-1 text-sm font-medium text-red-500">{errors.password}</p>
         )}
       </div>
 
@@ -170,12 +176,20 @@ export function SignUpForm() {
         type="submit"
         // disable button while submitting
         disabled={isSubmitting}
-        className="w-full border rounded px-2 py-1"
+        className={buttonClass}
       >
-        {isSubmitting ? 'Submitting…' : 'Sign up'}
+        {isSubmitting ? 'Signing up...' : 'Sign up'}
       </button>
 
-      {message && <p className="text-sm mt-2">{message}</p>}
+      {message && (
+        <p
+          className={`text-sm font-medium ${
+            message.toLowerCase().includes('success') ? 'text-emerald-600' : 'text-red-600'
+          }`}
+        >
+          {message}
+        </p>
+      )}
     </form>
   );
 }
