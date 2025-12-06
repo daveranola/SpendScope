@@ -27,7 +27,14 @@ export const LoginFormSchema = z.object({
     password: z.string().min(1, { message: 'Password cannot be empty.' }),
 });
 
+export const TransactionSchema = z.object({
+    amount: z.float64({ message: 'Amount must be a number.' }),
+    description: z.string({ message: 'Description must be a string.' }),
+});
+
 // essentially infers the type from the schema defined above so name, email, password are all strings
 export type SignupValues = z.infer<typeof SignupFormSchema>;
 
 export type LoginValues = z.infer<typeof LoginFormSchema>;
+
+export type TransactionValues = z.infer<typeof TransactionSchema>;

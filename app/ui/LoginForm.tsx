@@ -2,6 +2,7 @@
 
 // FormEvent - for onSubmit event of form
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { LoginFormSchema, LoginValues } from "../lib/validation";
 
 type FieldErrors = Partial<Record<keyof LoginValues, string>>;
@@ -29,6 +30,7 @@ export function LoginForm() {
 
     // message to show user after submission, wither string or null it can take
     const [message, setMessage] = useState<string | null>(null);
+    const router = useRouter();
 
     // e -> change event coming from <input> element
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -96,6 +98,7 @@ export function LoginForm() {
           }
 
           setMessage('Login successful!');
+          router.push('/dashboard');
         } catch (err) {
           console.error(err);
           setMessage('Error submitting form. Please try again.');
@@ -107,11 +110,11 @@ export function LoginForm() {
     return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
       <div>
-        <label htmlFor="email" className={labelClass}>
+        <label htmlFor="login-email" className={labelClass}>
           Email
         </label>
         <input
-          id="email"
+          id="login-email"
           name="email"
           type="email"
           value={form.email}
@@ -125,11 +128,11 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label htmlFor="password" className={labelClass}>
+        <label htmlFor="login-password" className={labelClass}>
           Password
         </label>
         <input
-          id="password"
+          id="login-password"
           name="password"
           type="password"
           value={form.password}
