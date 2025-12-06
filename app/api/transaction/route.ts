@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         );
     }
 
-    const { amount, description } = result.data;
+    const { amount, description, category, type } = result.data;
     const supabase = createSupabaseServerClient();
 
     const {
@@ -35,8 +35,10 @@ export async function POST(request: Request) {
     const { data, error } = await supabase
         .from("Transaction")
         .insert({
-            amount,
+            amount: type === "EXPENSE" ? -Math.abs(amount) : Math.abs(amount),
             description,
+            category,
+            type,
             userId: user.id,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -58,6 +60,8 @@ export async function POST(request: Request) {
                 id: data.id,
                 amount: data.amount,
                 description: data.description,
+                category: data.category,
+                type: data.type,
             }
         },
         { status: 201 }

@@ -1,5 +1,19 @@
 import * as z from 'zod';
 
+export const transactionCategories = [
+    "GROCERIES",
+    "RENT",
+    "EATING_OUT",
+    "TRANSPORT",
+    "SUBSCRIPTIONS",
+    "ENTERTAINMENT",
+    "UTILITIES",
+    "INCOME",
+    "OTHER",
+] as const;
+
+export const transactionTypes = ["EXPENSE", "INCOME"] as const;
+
 // z.object -> expects some object with name, email, password
 export const SignupFormSchema = z.object({
     // z.string -> expects a string
@@ -28,13 +42,24 @@ export const LoginFormSchema = z.object({
 });
 
 export const TransactionSchema = z.object({
-    amount: z.float64({ message: 'Amount must be a number.' }),
+    amount: z
+        .number({ invalid_type_error: 'Amount must be a number.' })
+        .positive({ message: 'Amount must be greater than 0.' }),
     description: z.string({ message: 'Description must be a string.' }),
+    category: z.enum(transactionCategories, {
+        required_error: "Category is required.",
+        invalid_type_error: "Category must be one of the predefined options.",
+    }),
+    type: z.enum(transactionTypes, {
+        required_error: "Type is required.",
+        invalid_type_error: "Type must be income or expense.",
+    }),
 });
 
-// essentially infers the type from the schema defined above so name, email, password are all strings
 export type SignupValues = z.infer<typeof SignupFormSchema>;
 
 export type LoginValues = z.infer<typeof LoginFormSchema>;
 
 export type TransactionValues = z.infer<typeof TransactionSchema>;
+
+export type TransactionCategory = (typeof transactionCategories)[number];

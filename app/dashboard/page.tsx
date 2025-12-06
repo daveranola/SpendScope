@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 import { TransactionForm } from "@/app/ui/TrasnsactionForm";
+import { CategoryPieChart } from "@/app/ui/CategoryPieChart";
 
 // Dashboard: requires an authenticated user and exposes the transaction form.
 export default async function DashboardPage() {
@@ -16,11 +17,38 @@ export default async function DashboardPage() {
 
   const { data: transactions, error: txError } = await supabase
     .from("Transaction")
-    .select("amount")
+    .select("amount, category, type")
     .eq("userId", user.id);
 
   const balance =
     transactions?.reduce((total, tx) => total + (tx.amount ?? 0), 0) ?? 0;
+
+  const txs = transactions ?? [];
+
+  // build a map: category -> total
+  const expenseTotals: Record<string, number> = {};
+  const incomeTotals: Record<string, number> = {};
+
+  for (const tx of txs) {
+    const cat = tx.category ?? "OTHER";
+    const amt = Math.abs(tx.amount ?? 0);
+
+    if (tx.type === "EXPENSE") {
+      expenseTotals[cat] = (expenseTotals[cat] ?? 0) + amt;
+    } else {
+      incomeTotals[cat] = (incomeTotals[cat] ?? 0) + amt;
+    }
+  }
+
+  const expenseChartData = Object.entries(expenseTotals).map(([category, total]) => ({
+    category,
+    total,
+  }));
+
+  const incomeChartData = Object.entries(incomeTotals).map(([category, total]) => ({
+    category,
+    total,
+  }));
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 space-y-8">
@@ -56,6 +84,10 @@ export default async function DashboardPage() {
           </p>
         </div>
         <TransactionForm />
+      </section>
+
+      <section>
+        <CategoryPieChart expenses={expenseChartData} income={incomeChartData} />
       </section>
     </main>
   );

@@ -2,9 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { TransactionSchema, type TransactionValues } from "../lib/validation";
+import {
+    TransactionSchema,
+    transactionCategories,
+    transactionTypes,
+    type TransactionValues,
+} from "../lib/validation";
 
-type FormState = { amount: string; description: string };
+type FormState = {
+    amount: string;
+    description: string;
+    category: TransactionValues["category"];
+    type: TransactionValues["type"];
+};
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 
 export function TransactionForm() {
@@ -17,21 +27,27 @@ export function TransactionForm() {
     const [form, setForm] = useState<FormState>({
         amount: "",
         description: "",
+        category: transactionCategories[0],
+        type: transactionTypes[0],
     });
     const [errors, setErrors] = useState<FieldErrors>({});
     const [message, setMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
-    function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleChange(
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) {
         const { name, value } = e.target;
+        const field = name as keyof FormState;
+
         setForm((prevForm) => ({
             ...prevForm,
-            [name]: value,
+            [field]: value as FormState[typeof field],
         }));
         setErrors((prevErrors) => ({
             ...prevErrors,
-            [name]: undefined,
+            [field]: undefined,
         }));
     }
 
@@ -43,6 +59,8 @@ export function TransactionForm() {
         const result = TransactionSchema.safeParse({
             amount: parsedAmount,
             description: form.description,
+            category: form.category,
+            type: form.type,
         });
         if (!result.success) {
             const fieldErrors: FieldErrors = {};
@@ -66,6 +84,8 @@ export function TransactionForm() {
                 body: JSON.stringify({
                     amount: parsedAmount,
                     description: form.description,
+                    category: form.category,
+                    type: form.type,
                 }),
             });
 
@@ -77,7 +97,12 @@ export function TransactionForm() {
             }
 
             setMessage("Transaction added.");
-            setForm({ amount: "", description: "" });
+            setForm({
+                amount: "",
+                description: "",
+                category: transactionCategories[0],
+                type: transactionTypes[0],
+            });
             router.refresh(); // refresh server data (balance card)
         } catch (error) {
             setMessage("An unexpected error occurred.");
@@ -98,6 +123,7 @@ export function TransactionForm() {
                     type="number"
                     inputMode="decimal"
                     step="0.01"
+                    min="0.01"
                     value={form.amount}
                     onChange={handleChange}
                     className={inputClass}
@@ -125,6 +151,52 @@ export function TransactionForm() {
                 />
                 {errors.description && (
                     <p className="mt-1 text-sm font-medium text-red-500">{errors.description}</p>
+                )}
+            </div>
+
+            <div>
+                <label htmlFor="category" className={labelClass}>
+                    Category
+                </label>
+                <select
+                    id="category"
+                    name="category"
+                    value={form.category}
+                    onChange={handleChange}
+                    className={inputClass}
+                    required
+                >
+                    {transactionCategories.map((category) => (
+                        <option key={category} value={category}>
+                            {category.replace(/_/g, " ")}
+                        </option>
+                    ))}
+                </select>
+                {errors.category && (
+                    <p className="mt-1 text-sm font-medium text-red-500">{errors.category}</p>
+                )}
+            </div>
+
+            <div>
+                <label htmlFor="type" className={labelClass}>
+                    Type
+                </label>
+                <select
+                    id="type"
+                    name="type"
+                    value={form.type}
+                    onChange={handleChange}
+                    className={inputClass}
+                    required
+                >
+                    {transactionTypes.map((type) => (
+                        <option key={type} value={type}>
+                            {type === "EXPENSE" ? "Expense" : "Income"}
+                        </option>
+                    ))}
+                </select>
+                {errors.type && (
+                    <p className="mt-1 text-sm font-medium text-red-500">{errors.type}</p>
                 )}
             </div>
 

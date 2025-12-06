@@ -13,13 +13,39 @@ datasource db {
   provider = "postgresql"
 }
 
+enum TransactionCategory {
+  GROCERIES
+  RENT
+  EATING_OUT
+  TRANSPORT
+  SUBSCRIPTIONS
+  ENTERTAINMENT
+  UTILITIES
+  INCOME
+  OTHER
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+}
+
 model Transaction {
-  id          Int      @id @default(autoincrement())
+  id          Int                  @id @default(autoincrement())
   amount      Float
   description String?
-  date        DateTime @default(now())
-  userId      String   @db.Uuid   // matches Supabase auth.user.id (uuid)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  date        DateTime             @default(now())
+
+  // category for the transaction
+  category    TransactionCategory  @default(OTHER)
+
+  // type of the transaction
+  type        TransactionType      @default(EXPENSE)
+
+  // Supabase auth.user.id (uuid as string)
+  userId      String               @db.Uuid
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 }
 
