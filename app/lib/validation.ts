@@ -14,6 +14,16 @@ export const transactionCategories = [
 
 export const transactionTypes = ["EXPENSE", "INCOME"] as const;
 
+export const BudgetSchema = z.object({
+    category: z.enum(transactionCategories, {
+        required_error: "Category is required.",
+        invalid_type_error: "Category must be one of the predefined options.",
+    }),
+    amount: z
+        .number({ invalid_type_error: 'Amount must be a number.' })
+        .nonnegative({ message: 'Amount must be 0 or greater.' }),
+});
+
 // z.object -> expects some object with name, email, password
 export const SignupFormSchema = z.object({
     // z.string -> expects a string
@@ -63,3 +73,5 @@ export type LoginValues = z.infer<typeof LoginFormSchema>;
 export type TransactionValues = z.infer<typeof TransactionSchema>;
 
 export type TransactionCategory = (typeof transactionCategories)[number];
+
+export type BudgetValues = z.infer<typeof BudgetSchema>;
