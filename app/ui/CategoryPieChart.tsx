@@ -15,6 +15,8 @@ type Props = {
 const expenseColors = ["#f97316", "#fb923c", "#fbbf24", "#fcd34d", "#f59e0b"];
 const incomeColors = ["#0ea5e9", "#22d3ee", "#2dd4bf", "#34d399", "#4ade80"];
 
+const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+
 function renderPie(data: CategoryTotal[], colors: string[], label: string) {
   if (!data.length) {
     return (
@@ -35,17 +37,13 @@ function renderPie(data: CategoryTotal[], colors: string[], label: string) {
             cx="50%"
             cy="50%"
             outerRadius={80}
-            label={({ percent }) => {
-              const pct = percent ?? 0;
-              return `${(pct * 100).toFixed(0)}%`;
-            }}
             labelLine={false}
           >
             {data.map((entry, index) => (
               <Cell key={entry.category} fill={colors[index % colors.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+          <Tooltip formatter={(value: number) => formatCurrency(value)} />
           <Legend />
         </PieChart>
       </ResponsiveContainer>
@@ -54,15 +52,35 @@ function renderPie(data: CategoryTotal[], colors: string[], label: string) {
 }
 
 export function CategoryPieChart({ expenses, income }: Props) {
+  const totalExpenses = expenses.reduce((sum, item) => sum + item.total, 0);
+  const totalIncome = income.reduce((sum, item) => sum + item.total, 0);
+  const netIncome = totalIncome - totalExpenses;
+
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="mb-3 text-sm font-semibold text-slate-700">Expenses by category</p>
-        {renderPie(expenses, expenseColors, "expenses")}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm">
+          <span>Net income</span>
+          <span className={netIncome >= 0 ? "text-emerald-300" : "text-rose-200"}>{formatCurrency(netIncome)}</span>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: incomeColors[0] }} />
+          <span>Income {formatCurrency(totalIncome)}</span>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: expenseColors[0] }} />
+          <span>Expenses {formatCurrency(totalExpenses)}</span>
+        </div>
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="mb-3 text-sm font-semibold text-slate-700">Income by category</p>
-        {renderPie(income, incomeColors, "income")}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="mb-3 text-sm font-semibold text-slate-700">Expenses by category</p>
+          {renderPie(expenses, expenseColors, "expenses")}
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="mb-3 text-sm font-semibold text-slate-700">Income by category</p>
+          {renderPie(income, incomeColors, "income")}
+        </div>
       </div>
     </div>
   );

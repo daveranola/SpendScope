@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 import { TransactionForm } from "@/app/ui/TrasnsactionForm";
 import { CategoryPieChart } from "@/app/ui/CategoryPieChart";
+import { TransactionList } from "@/app/ui/TransactionList";
 
 // Dashboard: requires an authenticated user and exposes the transaction form.
 export default async function DashboardPage() {
@@ -17,8 +18,9 @@ export default async function DashboardPage() {
 
   const { data: transactions, error: txError } = await supabase
     .from("Transaction")
-    .select("amount, category, type")
-    .eq("userId", user.id);
+    .select("id, amount, description, category, type, createdAt")
+    .eq("userId", user.id)
+    .order("createdAt", { ascending: false });
 
   const balance =
     transactions?.reduce((total, tx) => total + (tx.amount ?? 0), 0) ?? 0;
@@ -88,6 +90,10 @@ export default async function DashboardPage() {
 
       <section>
         <CategoryPieChart expenses={expenseChartData} income={incomeChartData} />
+      </section>
+
+      <section>
+        <TransactionList transactions={txs} />
       </section>
     </main>
   );
