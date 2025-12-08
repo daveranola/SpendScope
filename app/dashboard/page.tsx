@@ -47,6 +47,7 @@ export default async function DashboardPage() {
     .select("id, name, type")
     .eq("userId", user.id)
     .order("name", { ascending: true });
+  const safeCategories = categories ?? [];
 
   const now = new Date();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -337,7 +338,7 @@ export default async function DashboardPage() {
         </div>
         <TransactionForm
           goals={goalProgress.map((goal) => ({ id: goal.id, title: goal.title }))}
-          categories={categories}
+          categories={safeCategories}
         />
         {categoryError && (
           <p className="mt-3 text-xs font-semibold text-amber-600">Couldn&apos;t load categories.</p>
