@@ -8,6 +8,7 @@ import { MonthlyTrendsChart } from "@/app/ui/MonthlyTrendsChart";
 import { GoalForm } from "@/app/ui/GoalForm";
 import { GoalList } from "@/app/ui/GoalList";
 import { CategoryManager } from "@/app/ui/CategoryManager";
+import { DashboardTabs } from "@/app/ui/DashboardTabs";
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 const formatCategory = (value: string) => value.replace(/_/g, " ");
@@ -208,16 +209,8 @@ export default async function DashboardPage() {
   const monthOverMonthChange =
     lastMonthSpend > 0 ? ((thisMonthSpend - lastMonthSpend) / lastMonthSpend) * 100 : null;
 
-  return (
-    <main className="mx-auto max-w-3xl px-4 py-10 space-y-8">
-      <header className="space-y-2 text-white">
-        <p className="text-sm text-slate-300">Welcome back</p>
-        <h1 className="text-3xl font-bold">Your dashboard</h1>
-        <p className="text-sm text-slate-200">
-          Track your spending and save toward your goals.
-        </p>
-      </header>
-
+  const overviewContent = (
+    <>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
@@ -287,22 +280,6 @@ export default async function DashboardPage() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-slate-900">Add transaction</h2>
-          <p className="text-sm text-slate-600">
-            Log an expense or income to keep your budget up to date.
-          </p>
-        </div>
-        <TransactionForm
-          goals={goalProgress.map((goal) => ({ id: goal.id, title: goal.title }))}
-          categories={categories}
-        />
-        {categoryError && (
-          <p className="mt-3 text-xs font-semibold text-amber-600">Couldn&apos;t load categories.</p>
-        )}
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Saving goals</h2>
@@ -322,15 +299,35 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+    </>
+  );
 
+  const transactionsContent = (
+    <>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-slate-900">Manage categories</h2>
-          <p className="text-sm text-slate-600">Create income and expense categories to keep entries clean.</p>
+          <h2 className="text-lg font-semibold text-slate-900">Add transaction</h2>
+          <p className="text-sm text-slate-600">
+            Log an expense or income to keep your budget up to date.
+          </p>
         </div>
-        <CategoryManager />
+        <TransactionForm
+          goals={goalProgress.map((goal) => ({ id: goal.id, title: goal.title }))}
+          categories={categories}
+        />
+        {categoryError && (
+          <p className="mt-3 text-xs font-semibold text-amber-600">Couldn&apos;t load categories.</p>
+        )}
       </section>
 
+      <section>
+        <TransactionList transactions={txs} />
+      </section>
+    </>
+  );
+
+  const insightsContent = (
+    <>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -387,10 +384,54 @@ export default async function DashboardPage() {
       <section>
         <CategoryPieChart expenses={expenseChartData} income={incomeChartData} />
       </section>
+    </>
+  );
 
-      <section>
-        <TransactionList transactions={txs} />
+  const budgetsCategoriesContent = (
+    <>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Budgets</h2>
+            <p className="text-sm text-slate-600">Set monthly budgets on the budgets page.</p>
+          </div>
+          <Link
+            href="/budget"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Open budgets
+          </Link>
+        </div>
       </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-slate-900">Manage categories</h2>
+          <p className="text-sm text-slate-600">Create income and expense categories to keep entries clean.</p>
+        </div>
+        <CategoryManager />
+      </section>
+    </>
+  );
+
+  const tabs = [
+    { id: "overview", label: "Overview", content: overviewContent },
+    { id: "transactions", label: "Transactions", content: transactionsContent },
+    { id: "insights", label: "Insights", content: insightsContent },
+    { id: "budgets", label: "Budgets & Categories", content: budgetsCategoriesContent },
+  ];
+
+  return (
+    <main className="mx-auto max-w-3xl px-4 py-10 space-y-8">
+      <header className="space-y-2 text-white">
+        <p className="text-sm text-slate-300">Welcome back</p>
+        <h1 className="text-3xl font-bold">Your dashboard</h1>
+        <p className="text-sm text-slate-200">
+          Track your spending and save toward your goals.
+        </p>
+      </header>
+
+      <DashboardTabs tabs={tabs} />
     </main>
   );
 }
