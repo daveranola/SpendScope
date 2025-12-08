@@ -67,6 +67,7 @@ model Goal {
   title         String
   targetAmount  Float
   userId        String     @db.Uuid
+  isCompleted   Boolean    @default(false)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 

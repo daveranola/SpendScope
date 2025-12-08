@@ -15,7 +15,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("Goal")
-    .select("id, title, targetAmount, userId, createdAt, updatedAt")
+    .select("id, title, targetAmount, isCompleted, userId, createdAt, updatedAt")
     .eq("userId", user.id)
     .order("createdAt", { ascending: false });
 
@@ -55,11 +55,12 @@ export async function POST(request: Request) {
     .insert({
       title,
       targetAmount,
+      isCompleted: false,
       userId: user.id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
-    .select("id, title, targetAmount")
+    .select("id, title, targetAmount, isCompleted")
     .single();
 
   if (error) {

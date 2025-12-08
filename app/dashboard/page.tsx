@@ -38,7 +38,7 @@ export default async function DashboardPage() {
 
   const { data: goals = [], error: goalError } = await supabase
     .from("Goal")
-    .select("id, title, targetAmount")
+    .select("id, title, targetAmount, isCompleted")
     .eq("userId", user.id)
     .order("createdAt", { ascending: false });
 
@@ -139,15 +139,33 @@ export default async function DashboardPage() {
 
   const goalProgress = (goals ?? []).map((goal) => {
     const saved = Math.max(0, savedByGoal[goal.id] ?? 0);
-    const progressPct = goal.targetAmount > 0 ? Math.min((saved / goal.targetAmount) * 100, 999) : 0;
+    const rawPct = goal.targetAmount > 0 ? (saved / goal.targetAmount) * 100 : 0;
+    const progressPct = Math.min(rawPct, 100);
     const linkedTransactions = linkedTxCount[goal.id] ?? 0;
+    const isCompleted = (goal as any).isCompleted || saved >= goal.targetAmount;
     return {
       ...goal,
       savedAmount: saved,
       progressPct,
       linkedTransactions,
+      isCompleted,
+      wasCompleted: (goal as any).isCompleted ?? false,
     };
   });
+
+  const newlyCompletedIds = goalProgress
+    .filter((goal) => goal.isCompleted && !goal.wasCompleted)
+    .map((goal) => goal.id);
+
+  if (newlyCompletedIds.length) {
+    await supabase
+      .from("Goal")
+      .update({ isCompleted: true, updatedAt: new Date().toISOString() })
+      .in("id", newlyCompletedIds);
+  }
+
+  const activeGoals = goalProgress.filter((goal) => !goal.isCompleted);
+  const finishedGoals = goalProgress.filter((goal) => goal.isCompleted);
 
   const monthBuckets = Array.from({ length: monthsToShow }, (_, index) => {
     const date = new Date(now.getFullYear(), now.getMonth() - (monthsToShow - 1 - index), 1);
@@ -295,7 +313,13 @@ export default async function DashboardPage() {
             <GoalForm />
           </div>
           <div>
-            <GoalList goals={goalProgress} />
+            <GoalList goals={activeGoals} />
+            {finishedGoals.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <h3 className="text-sm font-semibold text-slate-700">Finished goals</h3>
+                <GoalList goals={finishedGoals} />
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -7,6 +7,7 @@ type GoalProgress = {
   savedAmount: number;
   progressPct: number;
   linkedTransactions: number;
+  isCompleted?: boolean;
 };
 
 type Props = {
@@ -36,10 +37,20 @@ export function GoalList({ goals }: Props) {
   return (
     <div className="space-y-4">
       {goals.map((goal) => (
-        <div key={goal.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div
+          key={goal.id}
+          className={`rounded-xl border p-4 shadow-sm ${goal.isCompleted ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white"}`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-slate-900">{goal.title}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-slate-900">{goal.title}</p>
+                {goal.isCompleted && (
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+                    Finished
+                  </span>
+                )}
+              </div>
               <p className="text-xs font-medium text-slate-500">
                 Target {formatCurrency(goal.targetAmount)}
               </p>
@@ -54,7 +65,7 @@ export function GoalList({ goals }: Props) {
               className={`h-full rounded-full ${
                 goal.progressPct >= 100 ? "bg-emerald-500" : "bg-blue-500"
               }`}
-              style={{ width: `${Math.min(goal.progressPct, 120)}%` }}
+              style={{ width: `${Math.min(goal.progressPct, 100)}%` }}
             />
           </div>
           <div className="mt-2 flex items-center justify-between text-xs font-semibold text-slate-600">

@@ -25,6 +25,7 @@ const formatDate = (value: string) => {
 
 export function TransactionList({ transactions }: { transactions: TransactionListItem[] }) {
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [page, setPage] = useState<number>(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
@@ -67,6 +68,12 @@ export function TransactionList({ transactions }: { transactions: TransactionLis
     });
   }, [transactions, sortOrder]);
 
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const paged = sorted.slice(start, start + pageSize);
+
   const empty = sorted.length === 0;
 
   return (
@@ -100,8 +107,9 @@ export function TransactionList({ transactions }: { transactions: TransactionLis
           No transactions yet.
         </div>
       ) : (
-        <ul className="divide-y divide-slate-100">
-          {sorted.map((tx) => {
+        <>
+          <ul className="divide-y divide-slate-100">
+            {paged.map((tx) => {
             const isIncome = tx.type === "INCOME";
             const amount = `${isIncome ? "+" : "-"}${formatCurrency(tx.amount)}`;
 
@@ -131,7 +139,30 @@ export function TransactionList({ transactions }: { transactions: TransactionLis
               </li>
             );
           })}
-        </ul>
+          </ul>
+
+          {totalPages > 1 && (
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              {Array.from({ length: totalPages }).map((_, idx) => {
+                const pageNum = idx + 1;
+                const isActive = pageNum === currentPage;
+                return (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    onClick={() => setPage(pageNum)}
+                    className={`h-3.5 w-3.5 rounded-full border transition ${
+                      isActive
+                        ? "border-slate-900 bg-slate-900 shadow-sm"
+                        : "border-slate-300 bg-white hover:border-slate-500"
+                    }`}
+                    aria-label={`Go to page ${pageNum}`}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {confirmId !== null && (
