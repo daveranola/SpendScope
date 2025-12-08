@@ -38,6 +38,8 @@ export default async function BudgetPage() {
     spentByCategory[cat] = (spentByCategory[cat] ?? 0) + amt;
   }
 
+  const safeBudgets = budgets ?? [];
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 space-y-8">
       <header className="space-y-2 text-white">
@@ -69,7 +71,7 @@ export default async function BudgetPage() {
           </div>
         </div>
 
-        <BudgetList budgets={budgets} spentByCategory={spentByCategory} title="Your budgets" />
+        <BudgetList budgets={safeBudgets} spentByCategory={spentByCategory} title="Your budgets" />
       </div>
     </main>
   );

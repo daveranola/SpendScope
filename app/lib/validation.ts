@@ -15,12 +15,9 @@ export const transactionCategories = [
 export const transactionTypes = ["EXPENSE", "INCOME"] as const;
 
 export const BudgetSchema = z.object({
-    category: z.enum(transactionCategories, {
-        required_error: "Category is required.",
-        invalid_type_error: "Category must be one of the predefined options.",
-    }),
+    category: z.enum(transactionCategories),
     amount: z
-        .number({ invalid_type_error: 'Amount must be a number.' })
+        .number()
         .nonnegative({ message: 'Amount must be 0 or greater.' }),
 });
 
@@ -53,17 +50,11 @@ export const LoginFormSchema = z.object({
 
 export const TransactionSchema = z.object({
     amount: z
-        .number({ invalid_type_error: 'Amount must be a number.' })
+        .number()
         .positive({ message: 'Amount must be greater than 0.' }),
-    description: z.string({ message: 'Description must be a string.' }),
-    category: z.enum(transactionCategories, {
-        required_error: "Category is required.",
-        invalid_type_error: "Category must be one of the predefined options.",
-    }),
-    type: z.enum(transactionTypes, {
-        required_error: "Type is required.",
-        invalid_type_error: "Type must be income or expense.",
-    }),
+    description: z.string(),
+    category: z.enum(transactionCategories),
+    type: z.enum(transactionTypes),
 });
 
 export type SignupValues = z.infer<typeof SignupFormSchema>;

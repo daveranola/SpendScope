@@ -25,7 +25,8 @@ function barColor(percent: number) {
 }
 
 export function BudgetList({ budgets, spentByCategory, title = "Budgets", showEmptyState = true }: Props) {
-  const sortedBudgets = [...budgets].sort((a, b) => a.category.localeCompare(b.category));
+  const safeBudgets = Array.isArray(budgets) ? budgets : [];
+  const sortedBudgets = [...safeBudgets].sort((a, b) => a.category.localeCompare(b.category));
 
   if (!sortedBudgets.length && showEmptyState) {
     return (

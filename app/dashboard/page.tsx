@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 import { TransactionForm } from "@/app/ui/TrasnsactionForm";
 import { CategoryPieChart } from "@/app/ui/CategoryPieChart";
 import { TransactionList } from "@/app/ui/TransactionList";
+import { MonthlyTrendsChart } from "@/app/ui/MonthlyTrendsChart";
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 const formatCategory = (value: string) => value.replace(/_/g, " ");
@@ -44,6 +45,12 @@ export default async function DashboardPage() {
   // build a map: category -> total
   const expenseTotals: Record<string, number> = {};
   const incomeTotals: Record<string, number> = {};
+  const monthsToShow = 6;
+  const startOfWindow = new Date(now.getFullYear(), now.getMonth() - (monthsToShow - 1), 1);
+  const monthlyExpenseTotals: Record<string, number> = {};
+  const monthlyIncomeTotals: Record<string, number> = {};
+  const monthlyExpenseByCategory: Record<string, Record<string, number>> = {};
+  const expenseTotalsByCategoryWindow: Record<string, number> = {};
 
   for (const tx of txs) {
     const cat = tx.category ?? "OTHER";
@@ -61,6 +68,21 @@ export default async function DashboardPage() {
       }
     } else {
       incomeTotals[cat] = (incomeTotals[cat] ?? 0) + amt;
+    }
+
+    if (txDate && txDate >= startOfWindow) {
+      const monthKey = `${txDate.getFullYear()}-${txDate.getMonth()}`;
+      if (tx.type === "EXPENSE") {
+        monthlyExpenseTotals[monthKey] = (monthlyExpenseTotals[monthKey] ?? 0) + amt;
+        const catTotals = monthlyExpenseByCategory[monthKey] ?? {};
+        monthlyExpenseByCategory[monthKey] = {
+          ...catTotals,
+          [cat]: (catTotals[cat] ?? 0) + amt,
+        };
+        expenseTotalsByCategoryWindow[cat] = (expenseTotalsByCategoryWindow[cat] ?? 0) + amt;
+      } else {
+        monthlyIncomeTotals[monthKey] = (monthlyIncomeTotals[monthKey] ?? 0) + amt;
+      }
     }
   }
 
@@ -90,6 +112,66 @@ export default async function DashboardPage() {
   const highlightedBudget = budgetUsage.length
     ? [...budgetUsage].sort((a, b) => b.percentUsed - a.percentUsed)[0]
     : null;
+
+  const monthBuckets = Array.from({ length: monthsToShow }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (monthsToShow - 1 - index), 1);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    const label = date.toLocaleDateString(undefined, { month: "short" });
+    const year = date.getFullYear();
+    return { key, label: `${label} '${String(year).slice(-2)}`, year };
+  });
+
+  const topExpenseCategories = Object.entries(expenseTotalsByCategoryWindow)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([category]) => category);
+
+  const monthlyChartData = monthBuckets.map(({ key, label }) => {
+    const categoryTotals = monthlyExpenseByCategory[key] ?? {};
+    const dataPoint: Record<string, string | number> = {
+      monthLabel: label,
+      expenseTotal: monthlyExpenseTotals[key] ?? 0,
+      incomeTotal: monthlyIncomeTotals[key] ?? 0,
+    };
+
+    for (const cat of topExpenseCategories) {
+      dataPoint[cat] = categoryTotals[cat] ?? 0;
+    }
+
+    const otherTotal = Object.entries(categoryTotals).reduce((sum, [cat, value]) => {
+      return topExpenseCategories.includes(cat) ? sum : sum + value;
+    }, 0);
+
+    if (otherTotal > 0) {
+      dataPoint.Other = otherTotal;
+    }
+
+    return dataPoint;
+  });
+
+  const expenseStackKeys = [...topExpenseCategories];
+  const hasOtherExpenses = Object.keys(monthlyExpenseByCategory).some((key) => {
+    const categoryTotals = monthlyExpenseByCategory[key];
+    return Object.keys(categoryTotals).some((cat) => !topExpenseCategories.includes(cat));
+  });
+  if (hasOtherExpenses) {
+    expenseStackKeys.push("Other");
+  }
+
+  const monthlyExpenseSeries = monthBuckets.map(({ key }) => monthlyExpenseTotals[key] ?? 0);
+  const averageMonthlySpend =
+    monthlyExpenseSeries.reduce((sum, value) => sum + value, 0) / monthBuckets.length;
+
+  const highestCategoryThisMonth = Object.entries(spentThisMonthByCategory)
+    .sort((a, b) => b[1] - a[1])
+    .map(([category, amount]) => ({ category, amount }))[0];
+
+  const currentMonthKey = monthBuckets[monthBuckets.length - 1]?.key;
+  const lastMonthKey = monthBuckets[monthBuckets.length - 2]?.key;
+  const thisMonthSpend = currentMonthKey ? monthlyExpenseTotals[currentMonthKey] ?? 0 : 0;
+  const lastMonthSpend = lastMonthKey ? monthlyExpenseTotals[lastMonthKey] ?? 0 : 0;
+  const monthOverMonthChange =
+    lastMonthSpend > 0 ? ((thisMonthSpend - lastMonthSpend) / lastMonthSpend) * 100 : null;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 space-y-8">
@@ -177,6 +259,59 @@ export default async function DashboardPage() {
           </p>
         </div>
         <TransactionForm />
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Monthly trends</h2>
+            <p className="text-sm text-slate-600">Track income and expenses across the last {monthsToShow} months.</p>
+          </div>
+          <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+            {monthBuckets[0]?.label} - {monthBuckets[monthBuckets.length - 1]?.label}
+          </span>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+          <MonthlyTrendsChart data={monthlyChartData} expenseStackKeys={expenseStackKeys} />
+          <div className="grid gap-3 text-sm font-semibold text-slate-800">
+            <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Average monthly spend</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(averageMonthlySpend)}</p>
+              <p className="text-xs text-slate-500">Across the last {monthsToShow} months.</p>
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Highest category this month</p>
+              {highestCategoryThisMonth ? (
+                <div className="mt-2 space-y-1">
+                  <p className="text-lg font-bold text-slate-900">{formatCategory(highestCategoryThisMonth.category)}</p>
+                  <p className="text-sm text-slate-600">{formatCurrency(highestCategoryThisMonth.amount)} spent</p>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-slate-600">No expenses recorded yet.</p>
+              )}
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">This month vs last</p>
+              <div className="mt-2 flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-bold text-slate-900">{formatCurrency(thisMonthSpend)}</p>
+                  <p className="text-xs text-slate-500">This month</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-slate-700">{formatCurrency(lastMonthSpend)} last month</p>
+                  {monthOverMonthChange !== null ? (
+                    <p className={`text-xs font-semibold ${monthOverMonthChange <= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                      {monthOverMonthChange > 0 ? "+" : ""}
+                      {monthOverMonthChange.toFixed(1)}% vs last month
+                    </p>
+                  ) : (
+                    <p className="text-xs font-semibold text-slate-500">No data for last month.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section>
