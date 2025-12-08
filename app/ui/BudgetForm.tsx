@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { transactionCategories } from "@/app/lib/validation";
 
 export function BudgetForm() {
-  const [category, setCategory] = useState<string>(transactionCategories[0]);
+  const [category, setCategory] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,18 +54,14 @@ export function BudgetForm() {
         <label className={labelClass} htmlFor="budget-category">
           Category
         </label>
-        <select
+        <input
           id="budget-category"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className={inputClass}
-        >
-          {transactionCategories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat.replace(/_/g, " ")}
-            </option>
-          ))}
-        </select>
+          placeholder="e.g., Groceries"
+          required
+        />
       </div>
 
       <div>

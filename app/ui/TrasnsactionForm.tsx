@@ -1,23 +1,35 @@
 'use client';
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
     TransactionSchema,
-    transactionCategories,
     transactionTypes,
     type TransactionValues,
 } from "../lib/validation";
+import { CategoryPickerHint } from "./CategoryPickerHint";
 
 type FormState = {
     amount: string;
     description: string;
     category: TransactionValues["category"];
     type: TransactionValues["type"];
+    goalId: string;
 };
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 
-export function TransactionForm() {
+type GoalOption = {
+    id: number;
+    title: string;
+};
+
+type CategoryOption = {
+    id: number;
+    name: string;
+    type: "EXPENSE" | "INCOME";
+};
+
+export function TransactionForm({ goals = [], categories = [] }: { goals?: GoalOption[]; categories?: CategoryOption[] }) {
     const inputClass =
         "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200";
     const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
@@ -27,8 +39,9 @@ export function TransactionForm() {
     const [form, setForm] = useState<FormState>({
         amount: "",
         description: "",
-        category: transactionCategories[0],
-        type: transactionTypes[0],
+        category: "",
+        type: "EXPENSE",
+        goalId: "",
     });
     const [errors, setErrors] = useState<FieldErrors>({});
     const [message, setMessage] = useState<string | null>(null);
@@ -56,11 +69,14 @@ export function TransactionForm() {
         setMessage(null);
 
         const parsedAmount = Number(form.amount);
+        const parsedGoalId = form.goalId ? Number(form.goalId) : null;
         const result = TransactionSchema.safeParse({
             amount: parsedAmount,
-            description: form.description,
+            description: form.description.trim(),
             category: form.category,
             type: form.type,
+            goalId: parsedGoalId,
+            categoryType: form.type,
         });
         if (!result.success) {
             const fieldErrors: FieldErrors = {};
@@ -83,9 +99,10 @@ export function TransactionForm() {
                 },
                 body: JSON.stringify({
                     amount: parsedAmount,
-                    description: form.description,
+                    description: form.description.trim(),
                     category: form.category,
                     type: form.type,
+                    goalId: parsedGoalId,
                 }),
             });
 
@@ -100,8 +117,9 @@ export function TransactionForm() {
             setForm({
                 amount: "",
                 description: "",
-                category: transactionCategories[0],
-                type: transactionTypes[0],
+                category: "",
+                type: "EXPENSE",
+                goalId: "",
             });
             router.refresh(); // refresh server data (balance card)
         } catch (error) {
@@ -113,45 +131,56 @@ export function TransactionForm() {
 
     return (
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
-            <div>
-                <label htmlFor="amount" className={labelClass}>
-                    Amount
-                </label>
-                <input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    min="0.01"
-                    value={form.amount}
-                    onChange={handleChange}
-                    className={inputClass}
-                    placeholder="e.g., 120.50"
-                    required
-                />
-                {errors.amount && (
-                    <p className="mt-1 text-sm font-medium text-red-500">{errors.amount}</p>
-                )}
-            </div>
+            <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
+                <div>
+                    <label htmlFor="amount" className={labelClass}>
+                        Amount
+                    </label>
+                    <input
+                        id="amount"
+                        name="amount"
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0.01"
+                        value={form.amount}
+                        onChange={handleChange}
+                        className={inputClass}
+                        placeholder="120.50"
+                        required
+                    />
+                    {errors.amount && (
+                        <p className="mt-1 text-sm font-medium text-red-500">{errors.amount}</p>
+                    )}
+                </div>
 
-            <div>
-                <label htmlFor="description" className={labelClass}>
-                    Description
-                </label>
-                <input
-                    id="description"
-                    name="description"
-                    type="text"
-                    value={form.description}
-                    onChange={handleChange}
-                    className={inputClass}
-                    placeholder="Groceries, rent, salary, etc."
-                    required
-                />
-                {errors.description && (
-                    <p className="mt-1 text-sm font-medium text-red-500">{errors.description}</p>
-                )}
+                <div>
+                    <label htmlFor="type" className={labelClass}>
+                        Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {transactionTypes.map((type) => (
+                            <button
+                                key={type}
+                                type="button"
+                                onClick={() =>
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        type,
+                                        category: "",
+                                    }))
+                                }
+                                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                                    form.type === type
+                                        ? "border-slate-900 bg-slate-900 text-white shadow"
+                                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                }`}
+                            >
+                                {type === "EXPENSE" ? "Expense" : "Income"}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             <div>
@@ -166,39 +195,60 @@ export function TransactionForm() {
                     className={inputClass}
                     required
                 >
-                    {transactionCategories.map((category) => (
-                        <option key={category} value={category}>
-                            {category.replace(/_/g, " ")}
-                        </option>
-                    ))}
+                    <option value="">Select a category</option>
+                    {(categories ?? [])
+                        .filter((cat) => cat.type === form.type)
+                        .map((cat) => (
+                            <option key={cat.id} value={cat.name}>
+                                {cat.name}
+                            </option>
+                        ))}
                 </select>
+                <CategoryPickerHint empty={(categories ?? []).filter((c) => c.type === form.type).length === 0} />
                 {errors.category && (
                     <p className="mt-1 text-sm font-medium text-red-500">{errors.category}</p>
                 )}
             </div>
 
             <div>
-                <label htmlFor="type" className={labelClass}>
-                    Type
+                <label htmlFor="description" className={labelClass}>
+                    Description (optional)
                 </label>
-                <select
-                    id="type"
-                    name="type"
-                    value={form.type}
+                <input
+                    id="description"
+                    name="description"
+                    type="text"
+                    value={form.description}
                     onChange={handleChange}
                     className={inputClass}
-                    required
-                >
-                    {transactionTypes.map((type) => (
-                        <option key={type} value={type}>
-                            {type === "EXPENSE" ? "Expense" : "Income"}
-                        </option>
-                    ))}
-                </select>
-                {errors.type && (
-                    <p className="mt-1 text-sm font-medium text-red-500">{errors.type}</p>
+                    placeholder="Groceries run, paycheque, etc."
+                />
+                {errors.description && (
+                    <p className="mt-1 text-sm font-medium text-red-500">{errors.description}</p>
                 )}
             </div>
+
+            {goals.length > 0 && (
+                <div>
+                    <label htmlFor="goal" className={labelClass}>
+                        Link to goal (optional)
+                    </label>
+                    <select
+                        id="goal"
+                        name="goalId"
+                        value={form.goalId}
+                        onChange={handleChange}
+                        className={inputClass}
+                    >
+                        <option value="">No goal</option>
+                        {goals.map((goal) => (
+                            <option key={goal.id} value={goal.id}>
+                                {goal.title}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
             <button
                 type="submit"

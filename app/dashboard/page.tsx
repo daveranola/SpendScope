@@ -5,6 +5,9 @@ import { TransactionForm } from "@/app/ui/TrasnsactionForm";
 import { CategoryPieChart } from "@/app/ui/CategoryPieChart";
 import { TransactionList } from "@/app/ui/TransactionList";
 import { MonthlyTrendsChart } from "@/app/ui/MonthlyTrendsChart";
+import { GoalForm } from "@/app/ui/GoalForm";
+import { GoalList } from "@/app/ui/GoalList";
+import { CategoryManager } from "@/app/ui/CategoryManager";
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 const formatCategory = (value: string) => value.replace(/_/g, " ");
@@ -23,7 +26,7 @@ export default async function DashboardPage() {
 
   const { data: transactions, error: txError } = await supabase
     .from("Transaction")
-    .select("id, amount, description, category, type, createdAt")
+    .select("id, amount, description, category, type, goalId, createdAt")
     .eq("userId", user.id)
     .order("createdAt", { ascending: false });
 
@@ -31,6 +34,18 @@ export default async function DashboardPage() {
     .from("Budget")
     .select("id, category, amount")
     .eq("userId", user.id);
+
+  const { data: goals = [], error: goalError } = await supabase
+    .from("Goal")
+    .select("id, title, targetAmount")
+    .eq("userId", user.id)
+    .order("createdAt", { ascending: false });
+
+  const { data: categories = [], error: categoryError } = await supabase
+    .from("Category")
+    .select("id, name, type")
+    .eq("userId", user.id)
+    .order("name", { ascending: true });
 
   const now = new Date();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -51,6 +66,8 @@ export default async function DashboardPage() {
   const monthlyIncomeTotals: Record<string, number> = {};
   const monthlyExpenseByCategory: Record<string, Record<string, number>> = {};
   const expenseTotalsByCategoryWindow: Record<string, number> = {};
+  const savedByGoal: Record<number, number> = {};
+  const linkedTxCount: Record<number, number> = {};
 
   for (const tx of txs) {
     const cat = tx.category ?? "OTHER";
@@ -60,6 +77,12 @@ export default async function DashboardPage() {
       txDate &&
       txDate.getMonth() === now.getMonth() &&
       txDate.getFullYear() === now.getFullYear();
+
+    if (typeof tx.goalId === "number") {
+      const contribution = Math.abs(tx.amount ?? 0);
+      savedByGoal[tx.goalId] = (savedByGoal[tx.goalId] ?? 0) + contribution;
+      linkedTxCount[tx.goalId] = (linkedTxCount[tx.goalId] ?? 0) + 1;
+    }
 
     if (tx.type === "EXPENSE") {
       expenseTotals[cat] = (expenseTotals[cat] ?? 0) + amt;
@@ -112,6 +135,18 @@ export default async function DashboardPage() {
   const highlightedBudget = budgetUsage.length
     ? [...budgetUsage].sort((a, b) => b.percentUsed - a.percentUsed)[0]
     : null;
+
+  const goalProgress = (goals ?? []).map((goal) => {
+    const saved = Math.max(0, savedByGoal[goal.id] ?? 0);
+    const progressPct = goal.targetAmount > 0 ? Math.min((saved / goal.targetAmount) * 100, 999) : 0;
+    const linkedTransactions = linkedTxCount[goal.id] ?? 0;
+    return {
+      ...goal,
+      savedAmount: saved,
+      progressPct,
+      linkedTransactions,
+    };
+  });
 
   const monthBuckets = Array.from({ length: monthsToShow }, (_, index) => {
     const date = new Date(now.getFullYear(), now.getMonth() - (monthsToShow - 1 - index), 1);
@@ -258,7 +293,42 @@ export default async function DashboardPage() {
             Log an expense or income to keep your budget up to date.
           </p>
         </div>
-        <TransactionForm />
+        <TransactionForm
+          goals={goalProgress.map((goal) => ({ id: goal.id, title: goal.title }))}
+          categories={categories}
+        />
+        {categoryError && (
+          <p className="mt-3 text-xs font-semibold text-amber-600">Couldn&apos;t load categories.</p>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Saving goals</h2>
+            <p className="text-sm text-slate-600">Create goals and link transactions to track progress.</p>
+          </div>
+          {goalError && (
+            <p className="text-xs font-semibold text-amber-600">Couldn&apos;t load goals.</p>
+          )}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_1.4fr]">
+          <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+            <p className="mb-2 text-sm font-semibold text-slate-800">Add a goal</p>
+            <GoalForm />
+          </div>
+          <div>
+            <GoalList goals={goalProgress} />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-slate-900">Manage categories</h2>
+          <p className="text-sm text-slate-600">Create income and expense categories to keep entries clean.</p>
+        </div>
+        <CategoryManager />
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

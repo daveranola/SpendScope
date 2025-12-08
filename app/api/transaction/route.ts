@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         );
     }
 
-    const { amount, description, category, type } = result.data;
+    const { amount, description = "", category, type, goalId } = result.data;
     const supabase = createSupabaseServerClient();
 
     const {
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
             description,
             category,
             type,
+            goalId: goalId ?? null,
             userId: user.id,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
