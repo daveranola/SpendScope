@@ -35,8 +35,18 @@ const steps = [
 ];
 
 const previews = [
-  { title: "Monthly trends", desc: "Income vs expenses with category stacks.", tag: "Insights" },
-  { title: "Goals & budgets", desc: "Track progress and stay under target.", tag: "Planning" },
+  {
+    title: "Monthly trends",
+    desc: "Income vs expenses with category stacks.",
+    sub: "Spot patterns in your spending before the month is over.",
+    tag: "Insights",
+  },
+  {
+    title: "Goals & budgets",
+    desc: "Track progress and stay under target.",
+    sub: "See how far you are from your savings and spending targets.",
+    tag: "Planning",
+  },
 ];
 
 export default function Home() {
