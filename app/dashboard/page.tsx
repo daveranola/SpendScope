@@ -183,7 +183,7 @@ export default async function DashboardPage() {
 
   const monthlyChartData = monthBuckets.map(({ key, label }) => {
     const categoryTotals = monthlyExpenseByCategory[key] ?? {};
-    const dataPoint: Record<string, string | number> = {
+    const dataPoint: { monthLabel: string; expenseTotal: number; incomeTotal: number } & Record<string, number> = {
       monthLabel: label,
       expenseTotal: monthlyExpenseTotals[key] ?? 0,
       incomeTotal: monthlyIncomeTotals[key] ?? 0,
