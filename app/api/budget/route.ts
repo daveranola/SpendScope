@@ -2,31 +2,6 @@ import { NextResponse } from "next/server";
 import { BudgetSchema } from "@/app/lib/validation";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 
-export async function GET() {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data, error } = await supabase
-    .from("Budget")
-    .select("id, category, amount")
-    .eq("userId", user.id)
-    .order("category", { ascending: true });
-
-  if (error) {
-    console.error("Supabase budget fetch error:", error);
-    return NextResponse.json({ error: error.message ?? "Failed to fetch budgets." }, { status: 500 });
-  }
-
-  return NextResponse.json({ budgets: data ?? [] });
-}
-
 export async function POST(request: Request) {
   const body = await request.json();
   const result = BudgetSchema.safeParse(body);
