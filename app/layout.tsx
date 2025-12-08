@@ -3,6 +3,14 @@ import { Manrope } from "next/font/google";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 import { AuthActions } from "@/app/ui/AuthActions";
 
+export const metadata = {
+  title: "SpendScope",
+  description: "Budgeting, goals, and insights in one clear dashboard.",
+  icons: {
+    icon: "/icon.svg",
+  },
+};
+
 const manrope = Manrope({
   subsets: ["latin"],
   display: "swap",

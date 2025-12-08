@@ -62,9 +62,7 @@ export default function Home() {
       <FadeInOnView className="relative mx-auto max-w-6xl px-6 py-10 lg:py-14">
         <header className="flex items-center justify-between gap-4 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-100 backdrop-blur">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-lg font-bold text-white">
-              S
-            </span>
+            <img src="/icon.svg" alt="SpendScope" className="h-7 w-7" />
             <span className="uppercase tracking-[0.12em] text-teal-200">SpendScope</span>
           </div>
           <div className="flex items-center gap-2">
