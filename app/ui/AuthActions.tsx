@@ -2,16 +2,34 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
   isAuthenticated: boolean;
 };
 
-export function AuthActions({ isAuthenticated }: Props) {
+export function AuthActions({ isAuthenticated: initialIsAuthenticated }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const [isAuthenticated, setIsAuthenticated] = useState(initialIsAuthenticated);
   const [loading, setLoading] = useState(false);
+
+  // Double-check auth state on the client to avoid stale SSR props.
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/auth-status", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return;
+        setIsAuthenticated(!!data?.isAuthenticated);
+      })
+      .catch(() => {
+        // ignore; fall back to initial SSR value
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Hide auth actions on the landing page to avoid showing logout there.
   if (pathname === "/") {
