@@ -1,6 +1,6 @@
 import "./globals.css";
 import { Manrope } from "next/font/google";
-import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
+import { createSupabaseServerComponentClient } from "@/app/lib/supabaseServer";
 import { AuthActions } from "@/app/ui/AuthActions";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -27,7 +27,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = createSupabaseServerClient();
+  const supabase = createSupabaseServerComponentClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

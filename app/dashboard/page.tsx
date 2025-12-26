@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
+import { createSupabaseServerComponentClient } from "@/app/lib/supabaseServer";
 import { TransactionForm } from "@/app/ui/TrasnsactionForm";
 import { CategoryPieChart } from "@/app/ui/CategoryPieChart";
 import { TransactionList } from "@/app/ui/TransactionList";
@@ -15,7 +15,7 @@ const formatCategory = (value: string) => value.replace(/_/g, " ");
 
 // Dashboard: requires an authenticated user and exposes the transaction form.
 export default async function DashboardPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = createSupabaseServerComponentClient();
 
   const {
     data: { user },

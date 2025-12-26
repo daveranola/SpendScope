@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
+import { createSupabaseServerComponentClient } from "@/app/lib/supabaseServer";
 import { BudgetForm } from "@/app/ui/BudgetForm";
 import { BudgetList } from "@/app/ui/BudgetList";
 
 export default async function BudgetPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = createSupabaseServerComponentClient();
 
   const {
     data: { user },
