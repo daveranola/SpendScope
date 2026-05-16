@@ -9,9 +9,14 @@ import { GoalForm } from "@/app/ui/GoalForm";
 import { GoalList } from "@/app/ui/GoalList";
 import { CategoryManager } from "@/app/ui/CategoryManager";
 import { DashboardTabs } from "@/app/ui/DashboardTabs";
+import { AppShell } from "@/app/ui/AppShell";
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 const formatCategory = (value: string) => value.replace(/_/g, " ");
+const primaryButtonClass =
+  "inline-flex items-center justify-center rounded-full bg-[#1f6b4e] px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#124b36] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7b96f]";
+const secondaryButtonClass =
+  "inline-flex items-center justify-center rounded-full border border-[#ded6c8] bg-white px-4 py-2.5 text-sm font-extrabold text-[#17211d] transition hover:border-[#1f6b4e] hover:text-[#1f6b4e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7b96f]";
 
 // Dashboard: requires an authenticated user and exposes the transaction form.
 export default async function DashboardPage() {
@@ -143,14 +148,15 @@ export default async function DashboardPage() {
     const rawPct = goal.targetAmount > 0 ? (saved / goal.targetAmount) * 100 : 0;
     const progressPct = Math.min(rawPct, 100);
     const linkedTransactions = linkedTxCount[goal.id] ?? 0;
-    const isCompleted = (goal as any).isCompleted || saved >= goal.targetAmount;
+    const wasCompleted = goal.isCompleted ?? false;
+    const isCompleted = wasCompleted || saved >= goal.targetAmount;
     return {
       ...goal,
       savedAmount: saved,
       progressPct,
       linkedTransactions,
       isCompleted,
-      wasCompleted: (goal as any).isCompleted ?? false,
+      wasCompleted,
     };
   });
 
@@ -227,6 +233,11 @@ export default async function DashboardPage() {
   const lastMonthSpend = lastMonthKey ? monthlyExpenseTotals[lastMonthKey] ?? 0 : 0;
   const monthOverMonthChange =
     lastMonthSpend > 0 ? ((thisMonthSpend - lastMonthSpend) / lastMonthSpend) * 100 : null;
+  const totalSpentThisMonth = Object.values(spentThisMonthByCategory).reduce((sum, value) => sum + value, 0);
+  const totalBudgeted = budgetUsage.reduce((sum, budget) => sum + budget.budget, 0);
+  const budgetRemaining = totalBudgeted - totalSpentThisMonth;
+  const activeGoalCount = activeGoals.length;
+  const transactionCount = txs.length;
 
   const overviewContent = (
     <>
@@ -446,17 +457,102 @@ export default async function DashboardPage() {
     { id: "budgets", label: "Budgets & Categories", content: budgetsCategoriesContent },
   ];
 
+  const summaryCards = [
+    {
+      label: "Current balance",
+      value: formatCurrency(balance),
+      detail: txError ? "Could not load balance" : `${transactionCount} transaction${transactionCount === 1 ? "" : "s"} recorded`,
+    },
+    {
+      label: "Spent this month",
+      value: formatCurrency(totalSpentThisMonth),
+      detail: highestCategoryThisMonth
+        ? `${formatCategory(highestCategoryThisMonth.category)} is your highest category`
+        : "No expenses recorded this month",
+    },
+    {
+      label: "Budget remaining",
+      value: totalBudgeted > 0 ? formatCurrency(budgetRemaining) : "Set budgets",
+      detail: totalBudgeted > 0 ? `${formatCurrency(totalBudgeted)} planned this month` : "Add category limits to track spending",
+    },
+    {
+      label: "Active goals",
+      value: String(activeGoalCount),
+      detail: activeGoalCount > 0 ? "Savings goals in progress" : "Create a goal to start saving",
+    },
+  ];
+
+  const quickActions = [
+    {
+      href: "/dashboard?tab=transactions",
+      title: "Log a transaction",
+      description: "Add income or spending while it is fresh.",
+    },
+    {
+      href: "/budget",
+      title: "Set monthly budgets",
+      description: "Create limits for groceries, transport, bills, and more.",
+    },
+    {
+      href: "/dashboard?tab=overview",
+      title: "Create a saving goal",
+      description: "Track progress toward an emergency fund or purchase.",
+    },
+    {
+      href: "/dashboard?tab=insights",
+      title: "Review spending trends",
+      description: "Compare recent months and category patterns.",
+    },
+  ];
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 space-y-8">
-      <header className="space-y-2 text-white">
-        <p className="text-sm text-slate-300">Welcome back</p>
-        <h1 className="text-3xl font-bold">Your dashboard</h1>
-        <p className="text-sm text-slate-200">
-          Track your spending and save toward your goals.
-        </p>
-      </header>
+    <AppShell
+      eyebrow="Dashboard"
+      title="Your money at a glance"
+      description="See your balance, spending pace, budgets, and savings goals from one clearer workspace."
+      actions={
+        <>
+          <Link href="/dashboard?tab=transactions" className={primaryButtonClass}>
+            Log transaction
+          </Link>
+          <Link href="/budget" className={secondaryButtonClass}>
+            Manage budgets
+          </Link>
+        </>
+      }
+    >
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {summaryCards.map((card) => (
+          <div key={card.label} className="rounded-[24px] border border-[#ded6c8] bg-[#fffcf6] p-5 shadow-sm">
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#69736c]">{card.label}</p>
+            <p className="mt-2 text-2xl font-extrabold text-[#17211d]">{card.value}</p>
+            <p className="mt-2 text-sm leading-5 text-[#69736c]">{card.detail}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="rounded-[28px] border border-[#ded6c8] bg-[#fffcf6] p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-xl font-extrabold text-[#17211d]">Quick access</h2>
+            <p className="mt-1 text-sm text-[#69736c]">Jump straight to the actions people use most after logging in.</p>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {quickActions.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="rounded-2xl border border-[#ded6c8] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#1f6b4e] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7b96f]"
+            >
+              <span className="block text-sm font-extrabold text-[#17211d]">{action.title}</span>
+              <span className="mt-1 block text-sm leading-5 text-[#69736c]">{action.description}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <DashboardTabs tabs={tabs} />
-    </main>
+    </AppShell>
   );
 }

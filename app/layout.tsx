@@ -11,7 +11,7 @@ export const fetchCache = "force-no-store";
 
 export const metadata = {
   title: "SpendScope",
-  description: "Budgeting, goals, and insights in one clear dashboard.",
+  description: "Track spending, savings, and goals without a spreadsheet.",
   icons: {
     icon: "/icon.svg",
   },

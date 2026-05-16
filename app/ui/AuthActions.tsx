@@ -31,8 +31,8 @@ export function AuthActions({ isAuthenticated: initialIsAuthenticated }: Props) 
     };
   }, []);
 
-  // Hide auth actions on the landing page to avoid showing logout there.
-  if (pathname === "/") {
+  // The landing page and logged-in app shell render their own auth/navigation controls.
+  if (pathname === "/" || pathname === "/dashboard" || pathname === "/budget") {
     return null;
   }
 
