@@ -9,10 +9,10 @@ type FieldErrors = Partial<Record<keyof LoginValues, string>>;
 
 export function LoginForm() {
     const inputClass =
-      "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200";
-    const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
+      "w-full rounded-[14px] border border-[#ded6c8] bg-[#fffcf6] px-3.5 py-3 text-sm font-medium text-[#17211d] shadow-sm placeholder:text-[#9b9488] transition focus:border-[#1f6b4e] focus:outline-none focus:ring-2 focus:ring-[#e7b96f]/35";
+    const labelClass = "mb-2 block text-sm font-bold text-[#17211d]";
     const buttonClass =
-      "w-full rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-400/30 transition hover:from-slate-800 hover:via-slate-900 hover:to-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60";
+      "w-full rounded-[14px] bg-[#17211d] px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#124b36] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7b96f] disabled:cursor-not-allowed disabled:opacity-60";
 
     // generics, useState will be of type FormState
     // initial state is empty strings
@@ -36,7 +36,6 @@ export function LoginForm() {
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         // e.target -> input element that triggered the event
         const { name, value } = e.target;
-        console.log('change', name, value);
 
         // prev - previous state of the form
         // ..prev - copy all existing fields
@@ -60,12 +59,10 @@ export function LoginForm() {
 
         // validate with zod
         const result = LoginFormSchema.safeParse(form);
-        console.log('Zod result:', result);
 
         if (!result.success) {
           // start with empty errors list (no errors)
           const fieldErrors: FieldErrors = {};
-          console.log('Zod issues:', result.error.issues);
 
           // iterate over validation issues
           for (const issue of result.error.issues) {
@@ -117,13 +114,15 @@ export function LoginForm() {
           id="login-email"
           name="email"
           type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
           value={form.email}
           onChange={handleChange}
           className={inputClass}
           required
         />
         {errors.email && (
-          <p className="mt-1 text-sm font-medium text-red-500">{errors.email}</p>
+          <p className="mt-1 text-sm font-semibold text-[#c96b58]">{errors.email}</p>
         )}
       </div>
 
@@ -135,13 +134,15 @@ export function LoginForm() {
           id="login-password"
           name="password"
           type="password"
+          placeholder="Your password"
+          autoComplete="current-password"
           value={form.password}
           onChange={handleChange}
           className={inputClass}
           required
         />
         {errors.password && (
-          <p className="mt-1 text-sm font-medium text-red-500">{errors.password}</p>
+          <p className="mt-1 text-sm font-semibold text-[#c96b58]">{errors.password}</p>
         )}
       </div>
 
@@ -157,7 +158,7 @@ export function LoginForm() {
       {message && (
         <p
           className={`text-sm font-medium ${
-            message.toLowerCase().includes('success') ? 'text-emerald-600' : 'text-red-600'
+            message.toLowerCase().includes('success') ? 'text-[#1f6b4e]' : 'text-[#c96b58]'
           }`}
         >
           {message}

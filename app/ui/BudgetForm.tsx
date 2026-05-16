@@ -11,8 +11,8 @@ export function BudgetForm() {
   const router = useRouter();
 
   const inputClass =
-    "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200";
-  const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
+    "w-full rounded-[14px] border border-[#b9ad9c] bg-[#fffcf6] px-3.5 py-3 text-sm font-semibold text-[#17211d] shadow-sm placeholder:text-[#7c756b] transition hover:border-[#8f8374] focus:border-[#1f6b4e] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#e7b96f]/45 disabled:cursor-not-allowed disabled:border-[#d8cfc0] disabled:bg-[#eee6d8] disabled:text-[#4d574f]";
+  const labelClass = "mb-2 block text-sm font-extrabold text-[#17211d]";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -60,6 +60,7 @@ export function BudgetForm() {
           onChange={(e) => setCategory(e.target.value)}
           className={inputClass}
           placeholder="e.g., Groceries"
+          autoComplete="off"
           required
         />
       </div>
@@ -84,14 +85,18 @@ export function BudgetForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-400/30 transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-[14px] bg-[#1f6b4e] px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#124b36] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7b96f] disabled:cursor-not-allowed disabled:bg-[#5f7569] disabled:text-white"
       >
         {isSubmitting ? "Saving..." : "Save budget"}
       </button>
 
       {message && (
         <p
-          className={`text-sm font-semibold ${message.toLowerCase().includes("saved") ? "text-emerald-600" : "text-rose-600"}`}
+          className={`rounded-xl px-3 py-2 text-sm font-extrabold ${
+            message.toLowerCase().includes("saved")
+              ? "bg-[#ddefe5] text-[#124b36]"
+              : "bg-[#f2d9d3] text-[#8f2f22]"
+          }`}
         >
           {message}
         </p>

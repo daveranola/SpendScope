@@ -28,8 +28,11 @@ export function GoalList({ goals }: Props) {
 
   if (!hasGoals) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm font-semibold text-slate-500">
-        No goals yet. Create one to start saving toward it.
+      <div className="rounded-2xl border border-dashed border-[#ded6c8] bg-white p-6">
+        <p className="text-sm font-extrabold text-[#17211d]">No goals yet</p>
+        <p className="mt-1 text-sm leading-6 text-[#69736c]">
+          Create one goal, then link transactions to show progress automatically.
+        </p>
       </div>
     );
   }

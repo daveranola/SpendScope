@@ -77,24 +77,24 @@ export function TransactionList({ transactions }: { transactions: TransactionLis
   const empty = sorted.length === 0;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="rounded-[28px] border border-[#ded6c8] bg-[#fffcf6] p-6 shadow-sm">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Transactions</h2>
-          <p className="text-sm text-slate-600">Review your latest activity.</p>
+          <h2 className="text-xl font-extrabold text-[#17211d]">Transactions</h2>
+          <p className="text-sm text-[#69736c]">Review your latest activity.</p>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-1 text-xs font-semibold text-slate-700 shadow-inner">
+        <div className="flex items-center gap-2 rounded-full border border-[#ded6c8] bg-[#f6f1e8] px-1.5 py-1 text-xs font-bold text-[#69736c] shadow-inner">
           <button
             type="button"
             onClick={() => setSortOrder("desc")}
-            className={`rounded-full px-3 py-1 transition ${sortOrder === "desc" ? "bg-slate-900 text-white shadow" : "hover:bg-white"}`}
+            className={`rounded-full px-3 py-1 transition ${sortOrder === "desc" ? "bg-[#17211d] text-white shadow" : "hover:bg-white hover:text-[#17211d]"}`}
           >
             Newest
           </button>
           <button
             type="button"
             onClick={() => setSortOrder("asc")}
-            className={`rounded-full px-3 py-1 transition ${sortOrder === "asc" ? "bg-slate-900 text-white shadow" : "hover:bg-white"}`}
+            className={`rounded-full px-3 py-1 transition ${sortOrder === "asc" ? "bg-[#17211d] text-white shadow" : "hover:bg-white hover:text-[#17211d]"}`}
           >
             Oldest
           </button>
@@ -103,8 +103,11 @@ export function TransactionList({ transactions }: { transactions: TransactionLis
       {error && <p className="mb-3 text-sm font-semibold text-rose-600">{error}</p>}
 
       {empty ? (
-        <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
-          No transactions yet.
+        <div className="rounded-2xl border border-dashed border-[#ded6c8] bg-white p-6">
+          <p className="text-sm font-extrabold text-[#17211d]">No transactions yet</p>
+          <p className="mt-1 text-sm leading-6 text-[#69736c]">
+            Add your first income or expense from the Transactions tab to start building your monthly picture.
+          </p>
         </div>
       ) : (
         <>
