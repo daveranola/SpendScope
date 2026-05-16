@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 
-// Return a simple auth flag for client checks.
 export async function GET() {
   const supabase = createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    return NextResponse.json({ isAuthenticated: false, user: null });
+  }
+
   const user = data.user;
 
   return NextResponse.json({

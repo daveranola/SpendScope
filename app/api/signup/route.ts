@@ -1,38 +1,31 @@
 import { NextResponse } from "next/server";
-import { SignupFormSchema } from "@/app/lib/validation";
+import { invalidDataResponse, readJsonBody } from "@/app/lib/api";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
+import { SignupFormSchema } from "@/app/lib/validation";
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const { body, errorResponse } = await readJsonBody(request);
+  if (errorResponse) {
+    return errorResponse;
+  }
 
-  // 1) validate with Zod
   const result = SignupFormSchema.safeParse(body);
   if (!result.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid data",
-        details: result.error.format(),
-      },
-      { status: 400 }
-    );
+    return invalidDataResponse(result.error.format());
   }
 
   const { name, email, password } = result.data;
-
   const supabase = createSupabaseServerClient();
 
-  // 2) Use Supabase Auth to sign up (handles hashing, user storage, etc.)
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      // store name in user_metadata
       data: { name },
     },
   });
 
   if (error) {
-    console.error("Supabase signUp error:", error);
     return NextResponse.json(
       { error: error.message ?? "Failed to create user." },
       { status: 400 }

@@ -1,71 +1,62 @@
-import { TransactionSchema } from "@/app/lib/validation";
 import { NextResponse } from "next/server";
+import {
+  getAuthenticatedUser,
+  invalidDataResponse,
+  readJsonBody,
+  serverErrorResponse,
+} from "@/app/lib/api";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
+import { TransactionSchema } from "@/app/lib/validation";
 
 export async function POST(request: Request) {
-    const body = await request.json();
+  const { body, errorResponse } = await readJsonBody(request);
+  if (errorResponse) {
+    return errorResponse;
+  }
 
-    const result = TransactionSchema.safeParse(body);
+  const result = TransactionSchema.safeParse(body);
+  if (!result.success) {
+    return invalidDataResponse(result.error.format());
+  }
 
-    if (!result.success) {
-        return NextResponse.json(
-            {
-                error: "Invalid data",
-                details: result.error.format(),
-            },
-            { status: 400 }
-        );
-    }
+  const { amount, description = "", category, type, goalId } = result.data;
+  const supabase = createSupabaseServerClient();
+  const { user, response } = await getAuthenticatedUser(supabase);
 
-    const { amount, description = "", category, type, goalId } = result.data;
-    const supabase = createSupabaseServerClient();
+  if (response) {
+    return response;
+  }
 
-    const {
-        data: { user },
-        error: authError,
-    } = await supabase.auth.getUser();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("Transaction")
+    .insert({
+      amount: type === "EXPENSE" ? -Math.abs(amount) : Math.abs(amount),
+      description,
+      category,
+      type,
+      goalId: goalId ?? null,
+      userId: user.id,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .select()
+    .single();
 
-    if (authError || !user) {
-        return NextResponse.json(
-            { error: "Unauthorized" },
-            { status: 401 }
-        );
-    }
+  if (error) {
+    return serverErrorResponse("Failed to create transaction.", error);
+  }
 
-    const { data, error } = await supabase
-        .from("Transaction")
-        .insert({
-            amount: type === "EXPENSE" ? -Math.abs(amount) : Math.abs(amount),
-            description,
-            category,
-            type,
-            goalId: goalId ?? null,
-            userId: user.id,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-        if (error) {
-            console.error("Supabase insert error:", error);
-            return NextResponse.json(
-                { error: error.message ?? "Failed to create transaction." },
-                { status: 500 }
-            );
-        }
-
-    return NextResponse.json(
-        {
-            transaction: {
-                id: data.id,
-                amount: data.amount,
-                description: data.description,
-                category: data.category,
-                type: data.type,
-            }
-        },
-        { status: 201 }
-    );
-
+  return NextResponse.json(
+    {
+      transaction: {
+        id: data.id,
+        amount: data.amount,
+        description: data.description,
+        category: data.category,
+        type: data.type,
+      },
+    },
+    { status: 201 }
+  );
 }

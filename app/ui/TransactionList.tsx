@@ -43,7 +43,7 @@ export function TransactionList({ transactions }: { transactions: TransactionLis
         return;
       }
       router.refresh();
-    } catch (_err) {
+    } catch {
       setError("An unexpected error occurred.");
     } finally {
       setDeletingId(null);
@@ -100,7 +100,11 @@ export function TransactionList({ transactions }: { transactions: TransactionLis
           </button>
         </div>
       </div>
-      {error && <p className="mb-3 text-sm font-semibold text-rose-600">{error}</p>}
+      {error && (
+        <p role="alert" className="mb-3 text-sm font-semibold text-rose-600">
+          {error}
+        </p>
+      )}
 
       {empty ? (
         <div className="rounded-2xl border border-dashed border-[#ded6c8] bg-white p-6">
@@ -170,8 +174,15 @@ export function TransactionList({ transactions }: { transactions: TransactionLis
 
       {confirmId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-slate-900">Delete transaction?</h3>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-transaction-title"
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+          >
+            <h3 id="delete-transaction-title" className="text-lg font-semibold text-slate-900">
+              Delete transaction?
+            </h3>
             <p className="mt-2 text-sm text-slate-600">
               This will remove{confirmLabel ? ` "${confirmLabel}"` : ""} permanently.
             </p>

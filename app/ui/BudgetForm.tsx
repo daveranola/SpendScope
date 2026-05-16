@@ -41,12 +41,14 @@ export function BudgetForm() {
       setMessage("Budget saved.");
       setAmount("");
       router.refresh();
-    } catch (_err) {
+    } catch {
       setMessage("An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const budgetSaved = message?.toLowerCase().includes("saved") ?? false;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
@@ -92,10 +94,9 @@ export function BudgetForm() {
 
       {message && (
         <p
+          role={budgetSaved ? "status" : "alert"}
           className={`rounded-xl px-3 py-2 text-sm font-extrabold ${
-            message.toLowerCase().includes("saved")
-              ? "bg-[#ddefe5] text-[#124b36]"
-              : "bg-[#f2d9d3] text-[#8f2f22]"
+            budgetSaved ? "bg-[#ddefe5] text-[#124b36]" : "bg-[#f2d9d3] text-[#8f2f22]"
           }`}
         >
           {message}

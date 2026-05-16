@@ -1,34 +1,28 @@
 import { NextResponse } from "next/server";
-import { LoginFormSchema } from "@/app/lib/validation";
+import { invalidDataResponse, readJsonBody, serverErrorResponse } from "@/app/lib/api";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
+import { LoginFormSchema } from "@/app/lib/validation";
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const { body, errorResponse } = await readJsonBody(request);
+  if (errorResponse) {
+    return errorResponse;
+  }
 
-  // 1) validate with Zod
   const result = LoginFormSchema.safeParse(body);
   if (!result.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid data",
-        details: result.error.format(),
-      },
-      { status: 400 }
-    );
+    return invalidDataResponse(result.error.format());
   }
 
   const { email, password } = result.data;
-
   const supabase = createSupabaseServerClient();
 
-  // Try to sign in with Supabase Auth
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) {
-    console.error("Supabase signIn error:", error);
     return NextResponse.json(
       { error: error.message ?? "Invalid email or password." },
       { status: 401 }
@@ -36,16 +30,13 @@ export async function POST(request: Request) {
   }
 
   if (!data.session || !data.user) {
-    console.error("Supabase signIn missing session/user:", data);
-    return NextResponse.json(
-      { error: "Login failed: no session returned. Confirm email or check Supabase Auth settings." },
-      { status: 500 }
+    return serverErrorResponse(
+      "Login failed: no session returned. Confirm email or check Supabase Auth settings."
     );
   }
 
   const user = data.user;
 
-  // Supabase has now set auth cookies for this user
   return NextResponse.json(
     {
       user: {
