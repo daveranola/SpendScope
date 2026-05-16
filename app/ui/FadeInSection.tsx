@@ -11,7 +11,6 @@ export function FadeInSection({ triggerKey, children }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setVisible(false);
     const t = setTimeout(() => setVisible(true), 10);
     return () => clearTimeout(t);
   }, [triggerKey]);

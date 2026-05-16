@@ -143,14 +143,15 @@ export default async function DashboardPage() {
     const rawPct = goal.targetAmount > 0 ? (saved / goal.targetAmount) * 100 : 0;
     const progressPct = Math.min(rawPct, 100);
     const linkedTransactions = linkedTxCount[goal.id] ?? 0;
-    const isCompleted = (goal as any).isCompleted || saved >= goal.targetAmount;
+    const wasCompleted = goal.isCompleted ?? false;
+    const isCompleted = wasCompleted || saved >= goal.targetAmount;
     return {
       ...goal,
       savedAmount: saved,
       progressPct,
       linkedTransactions,
       isCompleted,
-      wasCompleted: (goal as any).isCompleted ?? false,
+      wasCompleted,
     };
   });
 
