@@ -41,13 +41,22 @@ export function LoggedInNav() {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") ?? "overview";
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleLogout() {
     setLoading(true);
+    setError(null);
     try {
-      await fetch("/api/logout", { method: "POST" });
+      const res = await fetch("/api/logout", { method: "POST" });
+      if (!res.ok) {
+        setError("Could not log out. Please try again.");
+        return;
+      }
+
       router.refresh();
       router.push("/");
+    } catch {
+      setError("Could not log out. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -97,6 +106,11 @@ export function LoggedInNav() {
         >
           {loading ? "Logging out..." : "Log out"}
         </button>
+        {error && (
+          <p role="alert" className="mt-2 text-xs font-semibold text-[#8f2f22]">
+            {error}
+          </p>
+        )}
       </div>
     </aside>
   );

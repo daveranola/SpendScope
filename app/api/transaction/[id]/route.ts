@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
+import { getAuthenticatedUser, serverErrorResponse } from "@/app/lib/api";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 
 export async function DELETE(request: Request) {
-  // Only use the URL path to extract the transaction id, e.g. "/api/transaction/456" -> "456"
   const idRaw = new URL(request.url).pathname.split("/").pop();
-  // Coerce to number; NaN if non-numeric like "abc"
   const id = idRaw ? Number(idRaw) : NaN;
 
   if (!Number.isInteger(id)) {
@@ -12,14 +11,10 @@ export async function DELETE(request: Request) {
   }
 
   const supabase = createSupabaseServerClient();
+  const { user, response } = await getAuthenticatedUser(supabase);
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (response) {
+    return response;
   }
 
   const { error } = await supabase
@@ -29,8 +24,7 @@ export async function DELETE(request: Request) {
     .eq("userId", user.id);
 
   if (error) {
-    console.error("Supabase delete error:", error);
-    return NextResponse.json({ error: error.message ?? "Failed to delete transaction." }, { status: 500 });
+    return serverErrorResponse("Failed to delete transaction.", error);
   }
 
   return NextResponse.json({ success: true });

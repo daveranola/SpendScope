@@ -23,13 +23,34 @@ export function CategoryManager() {
   const router = useRouter();
 
   useEffect(() => {
-    async function load() {
-      const res = await fetch("/api/category");
-      if (!res.ok) return;
-      const data = await res.json();
-      setCategories(data.categories ?? []);
+    let isMounted = true;
+
+    async function loadCategories() {
+      try {
+        const res = await fetch("/api/category");
+        if (!res.ok) {
+          if (isMounted) {
+            setMessage("Could not load categories.");
+          }
+          return;
+        }
+
+        const data = await res.json();
+        if (isMounted) {
+          setCategories(data.categories ?? []);
+        }
+      } catch {
+        if (isMounted) {
+          setMessage("Could not load categories.");
+        }
+      }
     }
-    load();
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -63,7 +84,7 @@ export function CategoryManager() {
       setName("");
       setMessage("Category saved.");
       router.refresh();
-    } catch (_err) {
+    } catch {
       setMessage("An unexpected error occurred.");
     } finally {
       setIsSaving(false);
@@ -77,6 +98,7 @@ export function CategoryManager() {
     },
     { EXPENSE: [], INCOME: [] }
   );
+  const categorySaved = message?.toLowerCase().includes("saved") ?? false;
 
   return (
     <div className="space-y-4">
@@ -120,9 +142,8 @@ export function CategoryManager() {
         </button>
         {message && (
           <p
-            className={`text-xs font-semibold ${
-              message.toLowerCase().includes("saved") ? "text-emerald-600" : "text-rose-600"
-            }`}
+            role={categorySaved ? "status" : "alert"}
+            className={`text-xs font-semibold ${categorySaved ? "text-emerald-600" : "text-rose-600"}`}
           >
             {message}
           </p>

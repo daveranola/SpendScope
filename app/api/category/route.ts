@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
+import {
+  getAuthenticatedUser,
+  invalidDataResponse,
+  readJsonBody,
+  serverErrorResponse,
+} from "@/app/lib/api";
 import { CategorySchema } from "@/app/lib/validation";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 
 export async function GET() {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { user, response } = await getAuthenticatedUser(supabase);
 
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (response) {
+    return response;
   }
 
   const { data, error } = await supabase
@@ -20,32 +23,29 @@ export async function GET() {
     .order("name", { ascending: true });
 
   if (error) {
-    console.error("Supabase category fetch error:", error);
-    return NextResponse.json({ error: error.message ?? "Failed to fetch categories." }, { status: 500 });
+    return serverErrorResponse("Failed to fetch categories.", error);
   }
 
   return NextResponse.json({ categories: data ?? [] });
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const { body, errorResponse } = await readJsonBody(request);
+  if (errorResponse) {
+    return errorResponse;
+  }
+
   const result = CategorySchema.safeParse(body);
 
   if (!result.success) {
-    return NextResponse.json(
-      { error: "Invalid data", details: result.error.format() },
-      { status: 400 }
-    );
+    return invalidDataResponse(result.error.format());
   }
 
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { user, response } = await getAuthenticatedUser(supabase);
 
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (response) {
+    return response;
   }
 
   const { name, type } = result.data;
@@ -65,8 +65,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    console.error("Supabase category upsert error:", error);
-    return NextResponse.json({ error: error.message ?? "Failed to save category." }, { status: 500 });
+    return serverErrorResponse("Failed to save category.", error);
   }
 
   return NextResponse.json({ category: data }, { status: 201 });

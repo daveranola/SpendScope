@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
+import {
+  getAuthenticatedUser,
+  invalidDataResponse,
+  readJsonBody,
+  serverErrorResponse,
+} from "@/app/lib/api";
 import { GoalSchema } from "@/app/lib/validation";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 
 export async function GET() {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { user, response } = await getAuthenticatedUser(supabase);
 
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (response) {
+    return response;
   }
 
   const { data, error } = await supabase
@@ -20,35 +23,33 @@ export async function GET() {
     .order("createdAt", { ascending: false });
 
   if (error) {
-    console.error("Supabase goal fetch error:", error);
-    return NextResponse.json({ error: error.message ?? "Failed to fetch goals." }, { status: 500 });
+    return serverErrorResponse("Failed to fetch goals.", error);
   }
 
   return NextResponse.json({ goals: data ?? [] });
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const { body, errorResponse } = await readJsonBody(request);
+  if (errorResponse) {
+    return errorResponse;
+  }
+
   const result = GoalSchema.safeParse(body);
 
   if (!result.success) {
-    return NextResponse.json(
-      { error: "Invalid data", details: result.error.format() },
-      { status: 400 }
-    );
+    return invalidDataResponse(result.error.format());
   }
 
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { user, response } = await getAuthenticatedUser(supabase);
 
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (response) {
+    return response;
   }
 
   const { title, targetAmount } = result.data;
+  const now = new Date().toISOString();
 
   const { data, error } = await supabase
     .from("Goal")
@@ -57,15 +58,14 @@ export async function POST(request: Request) {
       targetAmount,
       isCompleted: false,
       userId: user.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     })
     .select("id, title, targetAmount, isCompleted")
     .single();
 
   if (error) {
-    console.error("Supabase goal insert error:", error);
-    return NextResponse.json({ error: error.message ?? "Failed to create goal." }, { status: 500 });
+    return serverErrorResponse("Failed to create goal.", error);
   }
 
   return NextResponse.json({ goal: data }, { status: 201 });

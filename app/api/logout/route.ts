@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { serverErrorResponse } from "@/app/lib/api";
 import { createSupabaseServerClient } from "@/app/lib/supabaseServer";
 
 export async function POST() {
@@ -6,8 +7,7 @@ export async function POST() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    console.error("Supabase signOut error:", error);
-    return NextResponse.json({ error: error.message ?? "Failed to sign out." }, { status: 500 });
+    return serverErrorResponse("Failed to sign out.", error);
   }
 
   return NextResponse.json({ success: true });

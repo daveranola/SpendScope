@@ -2,14 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { GoalSchema } from "@/app/lib/validation";
+import { getFieldErrors, GoalSchema, type FieldErrors } from "@/app/lib/validation";
 
 type FormState = {
   title: string;
   targetAmount: string;
 };
-
-type FieldErrors = Partial<Record<keyof FormState, string>>;
 
 export function GoalForm() {
   const inputClass =
@@ -19,7 +17,7 @@ export function GoalForm() {
     "w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-400/30 transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-60";
 
   const [form, setForm] = useState<FormState>({ title: "", targetAmount: "" });
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [errors, setErrors] = useState<FieldErrors<FormState>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -41,14 +39,7 @@ export function GoalForm() {
     });
 
     if (!result.success) {
-      const fieldErrors: FieldErrors = {};
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FormState;
-        if (!fieldErrors[field]) {
-          fieldErrors[field] = issue.message;
-        }
-      }
-      setErrors(fieldErrors);
+      setErrors(getFieldErrors<FormState>(result.error.issues));
       return;
     }
 
@@ -69,12 +60,14 @@ export function GoalForm() {
       setMessage("Goal created.");
       setForm({ title: "", targetAmount: "" });
       router.refresh();
-    } catch (_err) {
+    } catch {
       setMessage("An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const goalCreated = message?.toLowerCase().includes("goal created") ?? false;
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
@@ -122,9 +115,8 @@ export function GoalForm() {
 
       {message && (
         <p
-          className={`text-sm font-semibold ${
-            message.toLowerCase().includes("goal created") ? "text-emerald-600" : "text-rose-600"
-          }`}
+          role={goalCreated ? "status" : "alert"}
+          className={`text-sm font-semibold ${goalCreated ? "text-emerald-600" : "text-rose-600"}`}
         >
           {message}
         </p>

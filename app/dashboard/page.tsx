@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerComponentClient } from "@/app/lib/supabaseServer";
-import { TransactionForm } from "@/app/ui/TrasnsactionForm";
+import { TransactionForm } from "@/app/ui/TransactionForm";
 import { CategoryPieChart } from "@/app/ui/CategoryPieChart";
 import { TransactionList } from "@/app/ui/TransactionList";
 import { MonthlyTrendsChart } from "@/app/ui/MonthlyTrendsChart";
@@ -18,7 +18,6 @@ const primaryButtonClass =
 const secondaryButtonClass =
   "inline-flex items-center justify-center rounded-full border border-[#ded6c8] bg-white px-4 py-2.5 text-sm font-extrabold text-[#17211d] transition hover:border-[#1f6b4e] hover:text-[#1f6b4e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e7b96f]";
 
-// Dashboard: requires an authenticated user and exposes the transaction form.
 export default async function DashboardPage() {
   const supabase = createSupabaseServerComponentClient();
 
@@ -64,7 +63,6 @@ export default async function DashboardPage() {
   const txs = transactions ?? [];
   const spentThisMonthByCategory: Record<string, number> = {};
 
-  // build a map: category -> total
   const expenseTotals: Record<string, number> = {};
   const incomeTotals: Record<string, number> = {};
   const monthsToShow = 6;
