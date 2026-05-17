@@ -13,8 +13,8 @@ export function AuthActions({ isAuthenticated: initialIsAuthenticated }: Props) 
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(initialIsAuthenticated);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Double-check auth state on the client to avoid stale SSR props.
   useEffect(() => {
     let isMounted = true;
     fetch("/api/auth-status", { cache: "no-store" })
@@ -23,28 +23,29 @@ export function AuthActions({ isAuthenticated: initialIsAuthenticated }: Props) 
         if (!isMounted) return;
         setIsAuthenticated(!!data?.isAuthenticated);
       })
-      .catch(() => {
-        // ignore; fall back to initial SSR value
-      });
+      .catch(() => undefined);
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // The landing page and logged-in app shell render their own auth/navigation controls.
-  if (pathname === "/" || pathname === "/dashboard" || pathname === "/budget") {
+  if (pathname === "/" || pathname === "/login" || pathname === "/dashboard" || pathname === "/budget") {
     return null;
   }
 
   async function handleLogout() {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/logout", { method: "POST" });
       if (!res.ok) {
-        console.error("Logout failed");
+        setError("Could not log out. Please try again.");
+        return;
       }
       router.refresh();
       router.push("/");
+    } catch {
+      setError("Could not log out. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -56,7 +57,7 @@ export function AuthActions({ isAuthenticated: initialIsAuthenticated }: Props) 
   if (!isAuthenticated) {
     return (
       <Link
-        href="/"
+        href="/login"
         className={`${baseClass} border border-white/50 bg-white/80 text-slate-900 backdrop-blur hover:bg-white hover:shadow`}
       >
         Login
@@ -65,13 +66,20 @@ export function AuthActions({ isAuthenticated: initialIsAuthenticated }: Props) 
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      disabled={loading}
-      className={`${baseClass} border border-slate-200 bg-white text-slate-800 backdrop-blur hover:bg-slate-50 hover:shadow disabled:cursor-not-allowed disabled:opacity-70`}
-    >
-      {loading ? "Logging out..." : "Logout"}
-    </button>
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={handleLogout}
+        disabled={loading}
+        className={`${baseClass} border border-slate-200 bg-white text-slate-800 backdrop-blur hover:bg-slate-50 hover:shadow disabled:cursor-not-allowed disabled:opacity-70`}
+      >
+        {loading ? "Logging out..." : "Logout"}
+      </button>
+      {error && (
+        <p role="alert" className="text-xs font-semibold text-rose-600">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
